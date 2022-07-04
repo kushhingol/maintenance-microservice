@@ -24,5 +24,8 @@
     "jsonwebtoken": "^8.5.1",
     "mqemitter": "^5.0.0",
     "rootpath": "^0.1.2"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
