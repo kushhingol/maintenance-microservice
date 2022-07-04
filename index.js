@@ -6,9 +6,10 @@ const cors = require('cors');
 const utils = require("./src/utils/utils");
 
 
+app.use(cors());
+app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cors());
 
 // api routes
 app.use('/api/users', require("./src/user/user.controller"));

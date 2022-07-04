@@ -3,9 +3,7 @@ const router = express.Router();
 const utilsService = require("../utils/utils");
 const maintenanceService = require("./maintenance.service");
 const verifyTokenMiddleware = require("../middleware/authorize");
-const mq = require("mqemitter");
-const emitter = mq({ concurrency: 5 });
-const topicName = "maintenace-message";
+let clients = [];
 
 /**
  * @desc: Function is defined to handle the /add-maintenance route
@@ -17,8 +15,6 @@ const addMaintenanceData = async (req, res, next) => {
   try {
     const { success, data } = await maintenanceService.addData(req.body);
     if (success && data) {
-      const message = { topic: topicName, payload: JSON.stringify(data) };
-      emitter.emit(message);
       res.json(
         utilsService.responseHandler({
           res,
@@ -27,6 +23,7 @@ const addMaintenanceData = async (req, res, next) => {
           responseMessage: "Maintenance Window Added Successfully!",
         })
       );
+      sendEventsToAll(data)
     } else {
       throw utilsService.errorObject("FileOperationError");
     }
@@ -87,6 +84,13 @@ const clearMaintenanceData = async (req, res, next) => {
   }
 };
 
+function sendEventsToAll(maintenanceData) {
+  clients.forEach(client => {
+    console.log(client.id)
+    client.response.write(`data: ${JSON.stringify(maintenanceData)}\n\n`)
+  })
+}
+
 /**
  * @desc: Function is defined to manage /maintenance-events route
  * @param {*} request : Object (Request Object)
@@ -101,14 +105,19 @@ const addMaintenanceEvent = (request, response, next) => {
   };
   response.writeHead(200, headers);
 
-  emitter.on(topicName, function (message, cb) {
-    const data = JSON.stringify(message.payload);
-    response.write(data);
-    cb();
-  });
+  response.write("Connected");
+
+  const clientId = Date.now();
+
+  const newClient = {
+    id: clientId,
+    response,
+  };
+  clients.push(newClient);
 
   request.on("close", () => {
-    console.log("Connection closed");
+    console.log(`${clientId} Connection closed`);
+    clients = clients.filter((client) => client.id !== clientId);
   });
 };
 
