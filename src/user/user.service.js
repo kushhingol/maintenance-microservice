@@ -6,7 +6,7 @@ const login = async ({ email, password }) => {
   if (!email || !password) {
     throw utilsService.errorObject("NoCredentialFound");
   }
-  
+
   if (email && password) {
     const userData = await fileOperationUtils.getFileData("user.json");
     const isValidCredentials = userData.some(
@@ -14,7 +14,7 @@ const login = async ({ email, password }) => {
     );
     if (isValidCredentials) {
       const token = jwt.sign({ sub: email }, process.env.SECRET_KEY, {
-        expiresIn: 60 * process.env.TOKEN_EXPIRATION_TIME,
+        expiresIn: 60 * 1000 * process.env.TOKEN_EXPIRATION_TIME,
       });
 
       return {

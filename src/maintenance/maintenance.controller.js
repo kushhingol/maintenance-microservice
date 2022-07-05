@@ -114,6 +114,7 @@ const addMaintenanceEvent = (request, response, next) => {
     response,
   };
   clients.push(newClient);
+  response.write("Client Connected")
 
   request.on("close", () => {
     console.log(`${clientId} Connection closed`);
