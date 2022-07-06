@@ -1,0 +1,157 @@
+{
+	"info": {
+		"_postman_id": "cb2dd552-5f69-4f20-b3ec-3a8f48b0ac85",
+		"name": "Maintenance Service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14943069"
+	},
+	"item": [
+		{
+			"name": "Get All Maintenance Task",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://rugged-badlands-76158.herokuapp.com/api/maintenance/get-all-mainteance",
+					"protocol": "https",
+					"host": [
+						"rugged-badlands-76158",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"maintenance",
+						"get-all-mainteance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let jsonData = pm.response.json();\r",
+							"pm.test(\"Access token exists\", function () {\r",
+							"    pm.expect(jsonData.body).to.have.property('token');\r",
+							"});\r",
+							"pm.collectionVariables.set(\"token\", jsonData.body && jsonData.body.token ?  jsonData.body.token : null);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"email\": \"test@test.com\",\r\n    \"password\": \"test123\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://rugged-badlands-76158.herokuapp.com/api/users/login",
+					"protocol": "https",
+					"host": [
+						"rugged-badlands-76158",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Maintenance",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"New downtime\",\r\n    \"start_date\": \"04-07-2022\",\r\n    \"start_time\": \"11:59pm\",\r\n    \"end_date\": \"06-07-2022\",\r\n    \"end_time\": \"08:00am\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://rugged-badlands-76158.herokuapp.com/api/maintenance/add-maintenance",
+					"protocol": "https",
+					"host": [
+						"rugged-badlands-76158",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"maintenance",
+						"add-maintenance"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete All Maintenance Record",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "https://rugged-badlands-76158.herokuapp.com/api/maintenance/clear-maintenance-data",
+					"protocol": "https",
+					"host": [
+						"rugged-badlands-76158",
+						"herokuapp",
+						"com"
+					],
+					"path": [
+						"api",
+						"maintenance",
+						"clear-maintenance-data"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "token",
+			"value": ""
+		}
+	]
+}
