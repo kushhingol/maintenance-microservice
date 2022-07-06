@@ -1,47 +1,60 @@
 const utilsService = require("../utils/utils");
-const fileOperationUtils = require("../utils/file-operations");
+const Maintenance = require("./maintenance.model");
 
 /**
  * @desc: Function is defined to add the maintenance timelines
- * @param {*} maintenanceData : Object {name, startDate, endDate, endTime}
- * @returns  Promise<{success: boolean; data: {name, startDate, endDate, endTime}>
+ * @param {*} maintenanceData : Object {name, start_date, start_time, end_date, end_time}
+ * @returns  Promise<{name, start_date, start_time, end_date, end_time}>
  */
 const addData = async (maintenanceData) => {
-    const {name, startDate, startTime, endDate, endTime} = maintenanceData;
-    const isValidData = name && startDate && startTime && endDate && endTime;
-    if(isValidData) {
-        const maintenanceDataFromFile = await fileOperationUtils.getFileData('maintenance-datasource.json');
-        const addedNewRecord = [...JSON.parse(JSON.stringify(maintenanceDataFromFile)), maintenanceData];
-        const {success} = await fileOperationUtils.writeFileData('maintenance-datasource.json', addedNewRecord);
-        if(success) {
-            return {
-                success: true,
-                data: maintenanceData
-            }
+  const { name, start_date, start_time, end_date, end_time } = maintenanceData;
+  const isValidData = name && start_date && start_time && end_date && end_time;
+  if (isValidData) {
+    const newMaintenanceData = new Maintenance(maintenanceData);
+    return new Promise((resolve, reject) => {
+      Maintenance.create(newMaintenanceData, (err, res) => {
+        if (err) {
+          reject(err);
         } else {
-            throw utilsService.errorObject("FileOperationError");
+          resolve(newMaintenanceData);
         }
-        
-    } else {
-        throw utilsService.errorObject("FileOperationError");
-    }
-}
+      });
+    });
+  } else {
+    throw utilsService.errorObject("FileOperationError");
+  }
+};
 
 /**
  * @desc: Function is defined to get all maintenance data from the json data store
- * @returns Promise<{name, startDate, endDate, endTime}[]>
+ * @returns Promise<{name, start_date, start_time, end_date, end_time}[]>
  */
 const getAllData = () => {
-    const maintenanceDataFromFile = fileOperationUtils.getFileData('maintenance-datasource.json');
-    return maintenanceDataFromFile
-}
+  return new Promise((resolve, reject) => {
+    Maintenance.findAll((err, allMaintenanceData) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(allMaintenanceData);
+      }
+    });
+  });
+};
 
 /**
  * @desc: Function is defined to clear all mainteance data from the json data store
- * @returns Promise<{success: boolean}>
+ * @returns: Promise
  */
 const clearAllData = async () => {
-    return fileOperationUtils.writeFileData('maintenance-datasource.json', []);
-}
+  return new Promise((resolve, reject) => {
+    Maintenance.deleteAll((err, allMaintenanceData) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(allMaintenanceData);
+      }
+    });
+  });
+};
 
-module.exports = {addData, getAllData, clearAllData}
+module.exports = { addData, getAllData, clearAllData };

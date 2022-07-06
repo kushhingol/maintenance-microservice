@@ -12,7 +12,6 @@ const getFileData = async (fileName) => {
     const rawdata = await fs.readFileSync(`src/data-source/${fileName}`);
     return JSON.parse(rawdata);
   } catch (e) {
-    console.log('errpr', e)
     throw utilsService.errorObject("FileOperationError");
   }
 };

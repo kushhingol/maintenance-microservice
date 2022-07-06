@@ -3,6 +3,8 @@ const router = express.Router();
 const utilsService = require("../utils/utils");
 const maintenanceService = require("./maintenance.service");
 const verifyTokenMiddleware = require("../middleware/authorize");
+
+//Maintaining all the connected clients in an in-memory array (Only for non production use-case)
 let clients = [];
 
 /**
@@ -12,24 +14,22 @@ let clients = [];
  * @param {*} next : A callback function
  */
 const addMaintenanceData = async (req, res, next) => {
-  try {
-    const { success, data } = await maintenanceService.addData(req.body);
-    if (success && data) {
-      res.json(
-        utilsService.responseHandler({
-          res,
-          status: "success",
-          responseBody: data,
-          responseMessage: "Maintenance Window Added Successfully!",
-        })
-      );
-      sendEventsToAll(data)
-    } else {
-      throw utilsService.errorObject("FileOperationError");
-    }
-  } catch (err) {
-    next(err);
-  }
+  maintenanceService
+    .addData(req.body)
+    .then((data) => {
+      if (data) {
+        sendEventsToAll(data);
+        return res.json(
+          utilsService.responseHandler({
+            res,
+            status: "success",
+            responseBody: data,
+            responseMessage: "Maintenance Window Added Successfully!",
+          })
+        );
+      }
+    })
+    .catch((err) => next(err));
 };
 
 /**
@@ -38,11 +38,11 @@ const addMaintenanceData = async (req, res, next) => {
  * @param {*} res : Object (Response Object)
  * @param {*} next : A callback function
  */
-const getAllMainteanceData = (req, res, next) => {
+const getAllMainteanceData = async (req, res, next) => {
   maintenanceService
     .getAllData()
-    .then((data) =>
-      data
+    .then((data) => {
+      return data
         ? res.json(
             utilsService.responseHandler({
               res,
@@ -53,8 +53,8 @@ const getAllMainteanceData = (req, res, next) => {
           )
         : (function () {
             throw utilsService.errorObject("FileOperationError");
-          })()
-    )
+          })();
+    })
     .catch((err) => next(err));
 };
 
@@ -65,30 +65,34 @@ const getAllMainteanceData = (req, res, next) => {
  * @param {*} next : A callback function
  */
 const clearMaintenanceData = async (req, res, next) => {
-  try {
-    const { success } = await maintenanceService.clearAllData();
-    if (success) {
-      res.json(
-        utilsService.responseHandler({
-          res,
-          status: "success",
-          responseBody: [],
-          responseMessage: "All maintenance timelines deleted Successfully",
-        })
-      );
-    } else {
-      throw utilsService.errorObject("FileOperationError");
-    }
-  } catch (err) {
-    next(err);
-  }
+  maintenanceService
+    .clearAllData()
+    .then((data) => {
+      if (data) {
+        return res.json(
+          utilsService.responseHandler({
+            res,
+            status: "success",
+            responseBody: [],
+            responseMessage: "All maintenance timelines deleted Successfully",
+          })
+        );
+      }
+    })
+    .catch((err) => {
+      next(err);
+    });
 };
 
+/**
+ * @desc: Function is defined to send the maintenance data to all connected clients
+ * @param {*} maintenanceData : Object
+ */
 function sendEventsToAll(maintenanceData) {
-  clients.forEach(client => {
-    console.log(client.id)
-    client.response.write(`data: ${JSON.stringify(maintenanceData)}\n\n`)
-  })
+  clients.forEach((client) => {
+    console.log(client.id);
+    client.response.write(`data: ${JSON.stringify(maintenanceData)}\n\n`);
+  });
 }
 
 /**
@@ -114,7 +118,7 @@ const addMaintenanceEvent = (request, response, next) => {
     response,
   };
   clients.push(newClient);
-  response.write("Client Connected")
+  newClient.response.write("Client Connected");
 
   request.on("close", () => {
     console.log(`${clientId} Connection closed`);
@@ -122,9 +126,16 @@ const addMaintenanceEvent = (request, response, next) => {
   });
 };
 
+
+// Routes
 router.post("/add-maintenance", verifyTokenMiddleware, addMaintenanceData);
 router.get("/get-all-mainteance", getAllMainteanceData);
-router.delete("/clear-maintenance-data", clearMaintenanceData);
+router.delete(
+  "/clear-maintenance-data",
+  verifyTokenMiddleware,
+  clearMaintenanceData
+);
 router.get("/maintenance-events", addMaintenanceEvent);
+
 
 module.exports = router;
